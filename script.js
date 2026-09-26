@@ -1729,6 +1729,70 @@ const playerProfiles = {
   }
 };
 
+// Career data source: IPL player career dataset (2008–2025), loaded client-side.
+// This fills profiles for players that aren't in the small hand-curated profile list.
+const careerStatsUrl = "https://raw.githubusercontent.com/amar08007/ipl-career-dataset/main/data/ipl_players_master.csv";
+let careerStats = {};
+
+const careerNameAliases = {
+  "MS Dhoni":"M S Dhoni", "KL Rahul":"K L Rahul", "Suryakumar Yadav":"SA Yadav",
+  "Ruturaj Gaikwad":"R D Gaikwad", "Ravindra Jadeja":"Ravindra Jadeja", "Yashasvi Jaiswal":"Yashasvi Bhupendra Jaiswal",
+  "Krunal Pandya":"K H Pandya", "Rahul Tewatia":"R K Tewatia", "Shahrukh Khan":"M Shahrukh Khan",
+  "Nitish Rana":"Nitish Rana", "Sai Sudharsan":"B Sai Sudharsan", "Rajat Patidar":"Rajat Patidar",
+  "Rinku Singh":"Rinku Singh", "Jitesh Sharma":"J M Sharma", "Abhishek Sharma":"Abhishek Sharma",
+  "Shivam Dube":"Shivam Dube", "Shreyas Iyer":"Shreyas Iyer", "Sanju Samson":"Sanju Samson",
+  "Nicholas Pooran":"Nicholas Pooran", "Travis Head":"Travis Head", "Pat Cummins":"Pat Cummins",
+  "Rishabh Pant":"Rishabh Pant", "Hardik Pandya":"Hardik Pandya", "Jasprit Bumrah":"Jasprit Bumrah",
+  "Yuzvendra Chahal":"Yuzvendra Chahal", "Sunil Narine":"Sunil Narine", "Andre Russell":"Andre Russell",
+  "Shubman Gill":"Shubman Gill", "Axar Patel":"Axar Patel", "Prithvi Shaw":"Prithvi Shaw",
+  "Devdutt Padikkal":"Devdutt Padikkal", "Ayush Badoni":"Ayush Badoni", "Riyan Parag":"Riyan Parag",
+  "Aiden Markram":"Aiden Markram", "Mitchell Marsh":"Mitchell Marsh", "Liam Livingstone":"Liam Livingstone",
+  "Tim David":"Tim David", "Venkatesh Iyer":"Venkatesh Iyer", "Abishek Porel":"Abishek Porel",
+  "Dhruv Jurel":"Dhruv Chand Jurel", "Shashank Singh":"Shashank Singh", "Tilak Varma":"Tilak Varma",
+  "Rinku Singh":"Rinku Singh", "Karun Nair":"Karun Nair", "Manish Pandey":"Manish Pandey",
+  "David Miller":"David Miller", "Jos Buttler":"Jos Buttler", "Quinton de Kock":"Quinton de Kock",
+  "Cameron Green":"Cameron Green", "Tristan Stubbs":"Tristan Stubbs", "Prabhsimran Singh":"Prabhsimran Singh",
+  "Abdul Samad":"Abdul Samad", "Marcus Stoinis":"Marcus Stoinis", "Sam Curran":"Sam Curran",
+  "Glenn Maxwell":"Glenn Maxwell", "Mohammed Shami":"Mohammed Shami", "Mohammed Siraj":"Mohammed Siraj",
+  "Bhuvneshwar Kumar":"Bhuvneshwar Kumar", "Rashid Khan":"Rashid Khan", "Ravi Bishnoi":"Ravi Bishnoi",
+  "Harshal Patel":"Harshal Patel", "Sandeep Sharma":"Sandeep Sharma", "Jofra Archer":"Jofra Archer",
+  "Arshdeep Singh":"Arshdeep Singh", "Kuldeep Yadav":"Kuldeep Yadav", "Varun Chakravarthy":"Varun Chakravarthy",
+  "Deepak Chahar":"Deepak Chahar", "Khaleel Ahmed":"Khaleel Ahmed", "T Natarajan":"T Natarajan",
+  "Mukesh Kumar":"Mukesh Kumar", "Avesh Khan":"Avesh Khan", "Mayank Yadav":"Mayank Yadav",
+  "Ishan Kishan":"Ishan Kishan", "Rohit Sharma":"Rohit Sharma", "Virat Kohli":"Virat Kohli"
+};
+
+function csvFields(line){
+  const out=[]; let cur="", quoted=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"') { if(quoted && line[i+1]==='"'){cur+='"';i++;} else quoted=!quoted; }
+    else if(c===',' && !quoted){out.push(cur);cur="";} else cur+=c;
+  }
+  out.push(cur); return out;
+}
+function num(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
+function applyCareerCsv(csv){
+  const lines=csv.split(/\r?\n/).filter(Boolean);
+  if(!lines.length) return;
+  const head=csvFields(lines[0]); const ix=Object.fromEntries(head.map((h,i)=>[h,i]));
+  for(const line of lines.slice(1)){
+    const f=csvFields(line), raw=(f[ix.player_name]||"").trim(); if(!raw) continue;
+    careerStats[raw]={country:(f[ix.country]||"").trim()||"—", debut:num(f[ix.debut_year]), battingInnings:num(f[ix.career_batting_innings]), runs:num(f[ix.career_runs]), wickets:num(f[ix.career_wickets]), highest:num(f[ix.career_highest_score]), hundreds:num(f[ix.career_hundreds]), fifties:num(f[ix.career_fifties]), five:"—", double:"—", sr:(f[ix.career_batting_sr]||"").trim()||"—", avg:"—", dynamic:true};
+  }
+  // Re-render only if a profile modal is not open; player clicks use the fresh data immediately.
+  render();
+}
+fetch(careerStatsUrl).then(r=>r.ok?r.text():Promise.reject()).then(applyCareerCsv).catch(()=>{});
+
+function getPlayerData(name){
+  if(playerProfiles[name]) return playerProfiles[name];
+  const key=careerNameAliases[name] || name;
+  const c=careerStats[key];
+  if(!c) return null;
+  return { ...c, dob:"—", matches:"—" };
+}
+
 function teamCard(t){
   return `<article class="team-card" style="--team:${t.color}" data-id="${t.id}">
     <div class="team-top"><div class="team-mark">${t.short}</div><span class="chip">${t.since === 2022 ? "New era" : "Since "+t.since}</span></div>
@@ -1767,7 +1831,7 @@ function openTeam(id){
       </div>
       <div class="squad">
         <h3>2026 squad & bench pool</h3><p class="squad-note">Full squad pool; the final playing XI changes by match.</p>
-        <div class="player-grid">${t.players.map(p=>{const d=playerProfiles[p[0]]||{}; return `<div class="player player-click" data-player="${p[0]}"><span class="join">Joined ${p[2]}</span><strong>${p[0]}</strong><span>${d.country||"International / domestic"} · ${p[1]}</span></div>`}).join("")}</div>
+        <div class="player-grid">${t.players.map(p=>{const d=getPlayerData(p[0])||{}; return `<div class="player player-click" data-player="${p[0]}"><span class="join">Joined ${p[2]}</span><strong>${p[0]}</strong><span>${d.country||"International / domestic"} · ${p[1]}</span></div>`}).join("")}</div>
       </div>
     </div>`;
   modal.classList.remove("hidden");
@@ -1776,10 +1840,11 @@ function openTeam(id){
 }
 
 function openPlayer(name){
-  const d=playerProfiles[name];
+  const d=getPlayerData(name);
   const team=teams.find(t=>t.players.some(p=>p[0]===name));
   if(!d){
-    modalContent.innerHTML=`<div class="modal-hero" style="--team:${team?.color||'#ffcc33'}"><p class="eyebrow">PLAYER PROFILE</p><h2>${name}</h2><p>${team?.name||''}</p></div><div class="data-note">Career statistics for this player haven't been added to this frontend dataset yet. The profile structure is ready for them.</div><button class="back-btn" onclick="openTeam('${team?.id||''}')">← Back to team</button>`;
+    const row=team?.players.find(p=>p[0]===name);
+    modalContent.innerHTML=`<div class="modal-hero" style="--team:${team?.color||'#ffcc33'}"><p class="eyebrow">IPL PLAYER PROFILE</p><h2>${name}</h2><p>${team?.name||''}</p></div><div class="player-profile-grid"><div class="info-box"><h3>Player details</h3><div class="info-line"><span>Country</span><b>—</b></div><div class="info-line"><span>Date of birth</span><b>—</b></div><div class="info-line"><span>IPL debut</span><b>${row?.[2]||'—'}</b></div><div class="info-line"><span>Role</span><b>${row?.[1]||'—'}</b></div></div><div><h3 class="profile-heading">IPL career totals through 2025</h3><div class="career-stats"><div><b>—</b><span>Matches</span></div><div><b>—</b><span>Runs</span></div><div><b>—</b><span>Wickets</span></div><div><b>—</b><span>Highest score</span></div><div><b>—</b><span>100s</span></div><div><b>—</b><span>50s</span></div><div><b>—</b><span>5-wicket hauls</span></div><div><b>—</b><span>200s</span></div></div></div></div><div class="data-note"><strong>Data note:</strong> Career statistics are not available for this player in the connected 2008–2025 source dataset. The profile remains usable instead of showing an error.</div><button class="back-btn" onclick="openTeam('${team?.id||''}')">← Back to ${team?.short||'team'}</button>`;
     return;
   }
   modalContent.innerHTML=`
@@ -1792,10 +1857,10 @@ function openPlayer(name){
         <div class="info-line"><span>Current team</span><b>${team?.short||'—'}</b></div>
       </div>
       <div><h3 class="profile-heading">IPL career totals</h3><div class="career-stats">
-        <div><b>${d.matches}</b><span>Matches</span></div><div><b>${d.runs.toLocaleString()}</b><span>Runs</span></div><div><b>${d.wickets}</b><span>Wickets</span></div><div><b>${d.highest}</b><span>Highest score</span></div><div><b>${d.hundreds}</b><span>100s</span></div><div><b>${d.fifties}</b><span>50s</span></div><div><b>${d.five}</b><span>5-wicket hauls</span></div><div><b>${d.double}</b><span>200s</span></div><div><b>${d.avg}</b><span>Batting average</span></div><div><b>${d.sr}</b><span>Strike rate</span></div>
+        <div><b>${d.matches}</b><span>Matches</span></div>${d.dynamic ? `<div><b>${d.battingInnings}</b><span>Batting innings</span></div>` : ""}<div><b>${d.runs.toLocaleString()}</b><span>Runs</span></div><div><b>${d.wickets}</b><span>Wickets</span></div><div><b>${d.highest}</b><span>Highest score</span></div><div><b>${d.hundreds}</b><span>100s</span></div><div><b>${d.fifties}</b><span>50s</span></div><div><b>${d.five}</b><span>5-wicket hauls</span></div><div><b>${d.double}</b><span>200s</span></div><div><b>${d.avg}</b><span>Batting average</span></div><div><b>${d.sr}</b><span>Strike rate</span></div>
       </div></div>
     </div>
-    <div class="data-note"><strong>Data note:</strong> Career totals are IPL-only and are shown through the end of the 2025 season. International statistics are not included. Five-wicket hauls and centuries refer to IPL records.</div>
+    <div class="data-note"><strong>Data note:</strong> Career totals are IPL-only and are shown through the end of the 2025 season. The connected public career dataset supplies batting innings, runs, wickets, highest score, 100s, 50s and strike rate; it does not supply match count, batting average, five-wicket hauls or 200s for every player. A dash means that value is not provided by the source.</div>
     <button class="back-btn" onclick="openTeam('${team?.id||''}')">← Back to ${team?.short||'team'}</button>`;
 }
 
