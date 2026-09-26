@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IPL Vault — Teams & Players</title>
+  <meta name="description" content="A frontend IPL team and player information website built with HTML, CSS and JavaScript.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#"><span class="brand-ball">🏏</span><span>IPL<span>Vault</span></span></a>
+  <nav><a href="#teams">Teams</a><a href="#about">About</a><button id="auth-btn" class="auth-btn">Sign in</button></nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">TATA IPL · 2026</p>
+      <h1>The teams.<br><span>The players. The history.</span></h1>
+      <p class="hero-text">Explore every current IPL franchise, its titles, home ground, captain, sponsors and squad information — all in a lightweight frontend project.</p>
+      <a class="hero-btn" href="#teams">Explore teams ↓</a>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-top"><span>IPL 2026</span><span class="live-dot">●</span></div>
+      <strong>10</strong><small>current franchises</small>
+      <div class="mini-stats"><span><b>2008</b> first season</span><span><b>20+</b> seasons of history</span></div>
+    </div>
+  </section>
+
+  <section id="teams" class="section">
+    <div class="section-heading">
+      <div><p class="eyebrow">FRANCHISE DIRECTORY</p><h2>Choose a team</h2></div>
+      <input id="search" type="search" placeholder="Search team or city…" aria-label="Search teams">
+    </div>
+    <div id="team-grid" class="team-grid"></div>
+  </section>
+
+  <section id="about" class="about">
+    <div><p class="eyebrow">ABOUT THIS PROJECT</p><h2>Built without a backend.</h2></div>
+    <p>All information is stored in <code>script.js</code> as JavaScript data. That makes this project easy to understand, edit and deploy on GitHub Pages. The UI is generated dynamically with JavaScript.</p>
+    <div class="tech-row"><span>HTML5</span><span>CSS3</span><span>Vanilla JavaScript</span><span>GitHub Pages ready</span></div>
+  </section>
+</main>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-backdrop" data-close></div>
+  <article class="team-modal">
+    <button class="close" data-close aria-label="Close">×</button>
+    <div id="modal-content"></div>
+  </article>
+</div>
+
+<div id="auth-modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-backdrop" data-auth-close></div>
+  <article class="auth-modal">
+    <button class="close" data-auth-close aria-label="Close">×</button>
+    <div class="auth-brand">🏏 IPL<span>Vault</span></div>
+    <p class="eyebrow">MEMBER ACCESS</p>
+    <h2 id="auth-title">Sign in</h2>
+    <p class="auth-subtitle">Save your IPL Vault session on this browser.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth-tab="signin">Sign in</button>
+      <button class="auth-tab" data-auth-tab="register">Register</button>
+    </div>
+
+    <form id="auth-form">
+      <label id="name-field" class="field hidden">Name
+        <input id="auth-name" type="text" placeholder="Your name">
+      </label>
+
+      <label class="field">Mobile number
+        <input id="auth-mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number">
+      </label>
+
+      <div class="or"><span>or</span></div>
+
+      <label class="field">Gmail
+        <input id="auth-email" type="email" placeholder="you@gmail.com">
+      </label>
+
+      <label class="field">Password
+        <input id="auth-password" type="password" minlength="6" placeholder="Minimum 6 characters">
+      </label>
+
+      <button class="auth-submit" type="submit" id="auth-submit">Sign in</button>
+      <p class="auth-note">Demo frontend authentication: data is stored only in this browser using localStorage. No real Gmail login or SMS OTP is sent.</p>
+      <p id="auth-message" class="auth-message"></p>
+    </form>
+  </article>
+</div>
+
+<footer>IPL Vault · Frontend project · Data snapshot: IPL 2026</footer>
+<script src="script.js"></script>
+</body>
+</html>
